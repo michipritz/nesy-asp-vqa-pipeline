@@ -1,39 +1,39 @@
 trans_template_dict = {
-    "scene": "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-             ":- obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2).\n",
-    "unique": "out({id_out}, obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-              ":- out({id_in}, obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)).\n" +
+    "scene": "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+             ":- obj(Id,Shape,Size,Color,Material,X,Y,Z).\n",
+    "unique": "out({id_out}, obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+              ":- out({id_in}, obj(Id,Shape,Size,Color,Material,X,Y,Z)).\n" +
               ":- out({id_in},obj(Id,_,_,_,_,_,_,_,_)), out({id_in},obj(Id',_,_,_,_,_,_,_,_)), Id!=Id'.\n",
-    "relate": "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-              ":- out({id_in},obj(Id',Shape',Size',Color',Material',X1',Y1',X2',Y2'))," +
-              "obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2), relate(Id,Id',{val}).\n",
-    "count": "out({id_out},N) :- #count {{Id:out({id_in},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2))}}=N.\n",
-    "exist": "out({id_out},true) :- #count {{Id:out({id_in},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2))}}=N,N>=1.\n " +
+    "relate": "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+              ":- out({id_in},obj(Id',Shape',Size',Color',Material',X',Y',Z'))," +
+              "obj(Id,Shape,Size,Color,Material,X,Y,Z), relate(Id,Id',{val}).\n",
+    "count": "out({id_out},N) :- #count {{Id:out({id_in},obj(Id,Shape,Size,Color,Material,X,Y,Z))}}=N.\n",
+    "exist": "out({id_out},true) :- #count {{Id:out({id_in},obj(Id,Shape,Size,Color,Material,X,Y,Z))}}=N,N>=1.\n " +
              "out({id_out},false) :- not out({id_out},true).\n",
-    "filter_size": "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-                   ":- out({id_in},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)), Size={val}.\n",
-    "filter_color": "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-                    ":- out({id_in},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)), Color={val}.\n",
-    "filter_material": "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-                       ":- out({id_in},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)), Material={val}.\n",
-    "filter_shape": "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-                    ":- out({id_in},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)), Shape={val}.\n",
-    "query_size": "out({id_out},Size) :- out({id_in},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)).",
-    "query_color": "out({id_out},Color) :- out({id_in},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)).",
-    "query_material": "out({id_out},Material) :- out({id_in},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)).",
-    "query_shape": "out({id_out},Shape) :- out({id_in},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)).",
-    "same_size": "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-                 ":- out({id_in},obj(Id',Shape',Size',Color',Material',X1',Y1',X2',Y2')), " +
-                 "obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2), Size=Size', Id!=Id'.\n",
-    "same_color": "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-                  ":- out({id_in},obj(Id',Shape',Size',Color',Material',X1',Y1',X2',Y2')), " +
-                  "obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2), Color=Color', Id!=Id'.\n",
-    "same_material": "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-                     ":- out({id_in},obj(Id',Shape',Size',Color',Material',X1',Y1',X2',Y2')), " +
-                     "obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2), Material=Material', Id!=Id'.\n",
-    "same_shape": "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-                  ":- out({id_in},obj(Id',Shape',Size',Color',Material',X1',Y1',X2',Y2')), " +
-                  "obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2), Shape=Shape', Id!=Id'.\n",
+    "filter_size": "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+                   ":- out({id_in},obj(Id,Shape,Size,Color,Material,X,Y,Z)), Size={val}.\n",
+    "filter_color": "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+                    ":- out({id_in},obj(Id,Shape,Size,Color,Material,X,Y,Z)), Color={val}.\n",
+    "filter_material": "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+                       ":- out({id_in},obj(Id,Shape,Size,Color,Material,X,Y,Z)), Material={val}.\n",
+    "filter_shape": "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+                    ":- out({id_in},obj(Id,Shape,Size,Color,Material,X,Y,Z)), Shape={val}.\n",
+    "query_size": "out({id_out},Size) :- out({id_in},obj(Id,Shape,Size,Color,Material,X,Y,Z)).",
+    "query_color": "out({id_out},Color) :- out({id_in},obj(Id,Shape,Size,Color,Material,X,Y,Z)).",
+    "query_material": "out({id_out},Material) :- out({id_in},obj(Id,Shape,Size,Color,Material,X,Y,Z)).",
+    "query_shape": "out({id_out},Shape) :- out({id_in},obj(Id,Shape,Size,Color,Material,X,Y,Z)).",
+    "same_size": "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+                 ":- out({id_in},obj(Id',Shape',Size',Color',Material',X',Y',Z')), " +
+                 "obj(Id,Shape,Size,Color,Material,X,Y,Z), Size=Size', Id!=Id'.\n",
+    "same_color": "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+                  ":- out({id_in},obj(Id',Shape',Size',Color',Material',X',Y',Z')), " +
+                  "obj(Id,Shape,Size,Color,Material,X,Y,Z), Color=Color', Id!=Id'.\n",
+    "same_material": "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+                     ":- out({id_in},obj(Id',Shape',Size',Color',Material',X',Y',Z')), " +
+                     "obj(Id,Shape,Size,Color,Material,X,Y,Z), Material=Material', Id!=Id'.\n",
+    "same_shape": "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+                  ":- out({id_in},obj(Id',Shape',Size',Color',Material',X',Y',Z')), " +
+                  "obj(Id,Shape,Size,Color,Material,X,Y,Z), Shape=Shape', Id!=Id'.\n",
     "equal_integer": "out({id_out},true) :- out({id_in1},N), out({id_in2},N'), N=N'.\n" +
                      "out({id_out},false) :- not out({id_out},true).\n",
     "less_than": "out({id_out},true) :- out({id_in1},N), out({id_in2},N'), N<N'.\n" +
@@ -48,13 +48,13 @@ trans_template_dict = {
                       "out({id_out},false) :- not out({id_out},true).\n",
     "equal_shape": "out({id_out},true) :- out({id_in1},Shape), out({id_in2},Shape'), Shape=Shape'.\n" +
                    "out({id_out},false) :- not out({id_out},true).\n",
-    "union": "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-             ":- out({id_in1},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)).\n" +
-             "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-             ":- out({id_in2},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)).\n",
-    "intersect": "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
-                 ":- out({id_in1},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2))," +
-                 "out({id_in2},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2))."
+    "union": "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+             ":- out({id_in1},obj(Id,Shape,Size,Color,Material,X,Y,Z)).\n" +
+             "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+             ":- out({id_in2},obj(Id,Shape,Size,Color,Material,X,Y,Z)).\n",
+    "intersect": "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
+                 ":- out({id_in1},obj(Id,Shape,Size,Color,Material,X,Y,Z))," +
+                 "out({id_in2},obj(Id,Shape,Size,Color,Material,X,Y,Z))."
 }
 
 func_type = {

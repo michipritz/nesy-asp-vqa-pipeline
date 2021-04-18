@@ -47,9 +47,9 @@ if __name__ == "__main__":
                        + obj["size"] + "," \
                        + obj["color"] + "," \
                        + obj["material"] + "," \
-                       + str(obj["pixel_coords"][0]) + "," \
-                       + str(obj["pixel_coords"][1]) + "," \
-                       + "0,0).\n"
+                       + str("pixel_coords"[0]) + "," \
+                       + str("pixel_coords"[1]) + "," \
+                       + str(round(obj["pixel_coords"][2]*100)) + ").\n"
 
         program += "\n" + objects + "\n"
 
