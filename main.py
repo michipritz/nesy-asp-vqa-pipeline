@@ -38,10 +38,16 @@ if __name__ == "__main__":
 
     start_time = time.time()
     for i, scene in enumerate(scenes["scenes"]):
-        program = theory
+        program = ""
 
         objects = ""
+        spacial_relations = ""
         for j, obj in enumerate(scenes["scenes"][i]["objects"]):
+            left = ""
+            right = ""
+            behind = ""
+            front = ""
+
             objects += "obj(id" + str(j) + "," \
                        + obj["shape"] + "," \
                        + obj["size"] + "," \
@@ -51,10 +57,24 @@ if __name__ == "__main__":
                        + str("pixel_coords"[1]) + "," \
                        + str(round(obj["pixel_coords"][2]*100)) + ").\n"
 
-        program += "\n" + objects + "\n"
+            for k in scenes["scenes"][i]["relationships"]["left"][j]:
+                left += "relate(id" + str(k) + ",id" + str(j) + ",left)."
+
+            for k in scenes["scenes"][i]["relationships"]["right"][j]:
+                left += "relate(id" + str(k) + ",id" + str(j) + ",right)."
+
+            for k in scenes["scenes"][i]["relationships"]["behind"][j]:
+                left += "relate(id" + str(k) + ",id" + str(j) + ",behind)."
+
+            for k in scenes["scenes"][i]["relationships"]["front"][j]:
+                left += "relate(id" + str(k) + ",id" + str(j) + ",front)."
+
+            spacial_relations += left + "\n" + right + "\n" + behind + "\n" + front + "\n"
+
+        program += "\n" + objects + "\n" + spacial_relations + "\n"
 
         for j, q in enumerate(questions_dict[i]):
-            if q_total % 500 == 0 and q_total > 0:
+            if q_total % 5000 == 0 and q_total > 0:
                 print_stats(q_total, q_correct, q_invalid)
 
             q_asp = translate(q["program"])

@@ -3,7 +3,7 @@ trans_template_dict = {
              ":- obj(Id,Shape,Size,Color,Material,X,Y,Z).\n",
     "unique": "out({id_out}, obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
               ":- out({id_in}, obj(Id,Shape,Size,Color,Material,X,Y,Z)).\n" +
-              ":- out({id_in},obj(Id,_,_,_,_,_,_,_,_)), out({id_in},obj(Id',_,_,_,_,_,_,_,_)), Id!=Id'.\n",
+              ":- out({id_in},obj(Id,_,_,_,_,_,_,_)), out({id_in},obj(Id',_,_,_,_,_,_,_)), Id!=Id'.\n",
     "relate": "out({id_out},obj(Id,Shape,Size,Color,Material,X,Y,Z)) " +
               ":- out({id_in},obj(Id',Shape',Size',Color',Material',X',Y',Z'))," +
               "obj(Id,Shape,Size,Color,Material,X,Y,Z), relate(Id,Id',{val}).\n",
