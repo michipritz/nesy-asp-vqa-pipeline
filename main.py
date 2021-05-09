@@ -45,6 +45,8 @@ if __name__ == "__main__":
     facts = SceneParser().parse()
 
     for i, q in enumerate(questions["questions"]):
+        if i > 99:
+            break
         image_index = q['image_index']
 
         program = theory
@@ -77,23 +79,28 @@ if __name__ == "__main__":
                     q_correct += 1
                 else:
                     q_wrong += 1
+                    print_question_info(image_index, q['question'], ground_truth, guess)
             elif guess_val == "true":
                 if ground_truth == "yes":
                     q_correct += 1
                 else:
                     q_wrong += 1
+                    print_question_info(image_index, q['question'], ground_truth, guess)
             elif guess_val == "false":
                 if ground_truth == "no":
                     q_correct += 1
                 else:
                     q_wrong += 1
+                    print_question_info(image_index, q['question'], ground_truth, guess)
             else:
                 if ground_truth == guess_val:
                     q_correct += 1
                 else:
                     q_wrong += 1
+                    print_question_info(image_index, q['question'], ground_truth, guess)
         else:
             q_invalid += 1
+            print_question_info(image_index, q['question'], ground_truth, guess)
 
         q_total += 1
 
