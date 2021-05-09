@@ -1,7 +1,4 @@
 import json
-import os
-from PIL import Image
-import numpy as np
 
 import clingo
 import re
@@ -12,14 +9,21 @@ from scene_parser.scene_parser import SceneParser
 
 
 def print_stats(total, correct, wrong, invalid):
-    correct_rel = correct / total
-    wrong_rel = wrong / total
-    invalid_rel = invalid / total
+    correct_rel = correct / total * 100
+    wrong_rel = wrong / total * 100
+    invalid_rel = invalid / total * 100
 
-    print("Questions total: " + str(total))
-    print("Questions correct: " + str(correct) + " (" + str(correct_rel) + ")")
-    print("Questions wrong: " + str(wrong) + " (" + str(wrong_rel) + ")")
-    print("Questions invalid: " + str(invalid) + " (" + str(invalid_rel) + ")\n")
+    print("Questions total: \t{:7d}".format(total))
+    print("Questions correct: \t{:7d} ({:4.2f}%)".format(correct, correct_rel))
+    print("Questions wrong: \t{:7d} ({:4.2f}%)".format(wrong, wrong_rel))
+    print("Questions invalid: \t{:7d} ({:4.2f}%)\n".format(invalid, invalid_rel))
+
+
+def print_question_info(q_id, q_natural, q_true_ans, q_given_ans):
+    print('Image ID: {}'.format(str(q_id)))
+    print('Question: {}'.format(str(q_natural)))
+    print('Expected Answer: {}'.format(str(q_true_ans)))
+    print('Given Answer: {}\n'.format(str(q_given_ans)))
 
 
 if __name__ == "__main__":
@@ -28,13 +32,6 @@ if __name__ == "__main__":
 
     with open("theory.lp") as hard_rules_file:
         theory = hard_rules_file.read()
-
-    # questions_dict = {}
-    # for i, q in enumerate(questions["questions"]):
-    #    if q["image_index"] in questions_dict:
-    #        questions_dict[q["image_index"]].append(q)
-    #    else:
-    #        questions_dict[q["image_index"]] = [q]
 
     q_total = 0
     q_correct = 0
@@ -72,11 +69,6 @@ if __name__ == "__main__":
                     guess = str(atom)
 
         ground_truth = q["answer"]
-
-        # print('Image ID: {}'.format(str(image_index)))
-        # print('Question: {}'.format(q['question']))
-        # print('Expected Answer: {}'.format(str(ground_truth)))
-        # print('Given Answer: {}\n'.format(str(guess)))
 
         if guess:
             guess_val = re.search(r'\(([^)]+)', guess).group(1)
