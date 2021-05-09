@@ -1,11 +1,16 @@
 import json
 import re
+from pytorchyolo.utils.utils import rescale_boxes, to_cpu
 
 
 def predictions_to_asp_facts(predictions):
-    asp_facts = []
-    for obj_id, prediction in enumerate(predictions):
-        asp_facts.append(__prediction_to_asp_fact(obj_id, prediction))
+    asp_facts = {}
+    for scene_id, scene_predictions in enumerate(predictions):
+        asp_facts[scene_id] = []
+        scene_predictions = rescale_boxes(scene_predictions, 480, (320, 480))
+        scene_predictions = to_cpu(scene_predictions).numpy()
+        for obj_id, prediction in enumerate(scene_predictions):
+            asp_facts[scene_id].append(__prediction_to_asp_fact(obj_id, prediction))
     return asp_facts
 
 

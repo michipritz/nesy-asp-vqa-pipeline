@@ -29,78 +29,81 @@ if __name__ == "__main__":
     with open("theory.lp") as hard_rules_file:
         theory = hard_rules_file.read()
 
-    questions_dict = {}
-    for i, q in enumerate(questions["questions"]):
-        if q["image_filename"] in questions_dict:
-            questions_dict[q["image_filename"]].append(q)
-        else:
-            questions_dict[q["image_filename"]] = [q]
+    # questions_dict = {}
+    # for i, q in enumerate(questions["questions"]):
+    #    if q["image_index"] in questions_dict:
+    #        questions_dict[q["image_index"]].append(q)
+    #    else:
+    #        questions_dict[q["image_index"]] = [q]
 
     q_total = 0
     q_correct = 0
     q_wrong = 0
     q_invalid = 0
 
-    scene_parser = SceneParser()
     start_time = time.time()
-    for i, image_name in enumerate(questions_dict):
-        image_path = "./data/CLEVR_v1.0/images/val/" + image_name
-        image = np.array(Image.open(image_path).convert('RGB'))
+
+    # Parse all images in ./data/CLEVR_v1.0/images/val
+    # Facts contains parsed scene information for all scenes as ASP facts afterwards
+    facts = SceneParser().parse()
+
+    for i, q in enumerate(questions["questions"]):
+        image_index = q['image_index']
 
         program = theory
+        program += "\n" + '\n'.join(facts[str(image_index)]) + "\n"
 
-        facts = scene_parser.parse(image)
+        if q_total % 500 == 0 and q_total > 0:
+            print_stats(q_total, q_correct, q_wrong, q_invalid)
 
-        program += "\n" + '\n'.join(facts) + "\n"
+        q_asp = translate(q["program"])
+        composite_program = program + q_asp
 
-        questions = questions_dict[image_name]
-        for j, q in enumerate(questions_dict[image_name]):
-            if q_total % 500 == 0 and q_total > 0:
-                print_stats(q_total, q_correct, q_wrong, q_invalid)
+        models = []
+        ctl = clingo.Control("0", message_limit=0)
+        ctl.add("base", [], composite_program)
+        ctl.ground([("base", [])])
+        ctl.solve(on_model=lambda m: models.append(m.symbols(atoms=True)))
 
-            q_asp = translate(q["program"])
-            composite_program = program + q_asp
+        guess = ""
+        if models:
+            for atom in models[0]:
+                if "ans" in atom.name:
+                    guess = str(atom)
 
-            models = []
-            ctl = clingo.Control("0", message_limit=0)
-            ctl.add("base", [], composite_program)
-            ctl.ground([("base", [])])
-            ctl.solve(on_model=lambda m: models.append(m.symbols(atoms=True)))
+        ground_truth = q["answer"]
 
-            guess = ""
-            if models:
-                for atom in models[0]:
-                    if "ans" in atom.name:
-                        guess = str(atom)
+        # print('Image ID: {}'.format(str(image_index)))
+        # print('Question: {}'.format(q['question']))
+        # print('Expected Answer: {}'.format(str(ground_truth)))
+        # print('Given Answer: {}\n'.format(str(guess)))
 
-            ground_truth = q["answer"]
-
-            if guess:
-                guess_val = re.search(r'\(([^)]+)', guess).group(1)
-                if guess_val.isnumeric():
-                    if guess_val == str(ground_truth):
-                        q_correct += 1
-                    else:
-                        q_wrong += 1
-                elif guess_val == "true":
-                    if ground_truth == "yes":
-                        q_correct += 1
-                    else:
-                        q_wrong += 1
-                elif guess_val == "false":
-                    if ground_truth == "no":
-                        q_correct += 1
-                    else:
-                        q_wrong += 1
+        if guess:
+            guess_val = re.search(r'\(([^)]+)', guess).group(1)
+            if guess_val.isnumeric():
+                if guess_val == str(ground_truth):
+                    q_correct += 1
                 else:
-                    if ground_truth == guess_val:
-                        q_correct += 1
-                    else:
-                        q_wrong += 1
+                    q_wrong += 1
+            elif guess_val == "true":
+                if ground_truth == "yes":
+                    q_correct += 1
+                else:
+                    q_wrong += 1
+            elif guess_val == "false":
+                if ground_truth == "no":
+                    q_correct += 1
+                else:
+                    q_wrong += 1
             else:
-                q_invalid += 1
+                if ground_truth == guess_val:
+                    q_correct += 1
+                else:
+                    q_wrong += 1
+        else:
+            q_invalid += 1
 
-            q_total += 1
+        q_total += 1
 
     end_time = time.time()
 
