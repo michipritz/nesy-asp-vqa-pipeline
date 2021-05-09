@@ -1,25 +1,29 @@
 import json
+import os
+from PIL import Image
+import numpy as np
+
 import clingo
 import re
 import time
 
 from translate import translate
+from scene_parser.scene_parser import SceneParser
 
 
-def print_stats(total, correct, invalid):
+def print_stats(total, correct, wrong, invalid):
     correct_rel = correct / total
+    wrong_rel = wrong / total
     invalid_rel = invalid / total
 
     print("Questions total: " + str(total))
-    print("Questions correct: " + str(correct) + "\t\t(" + str(correct_rel) + ")")
-    print("Questions invalid: " + str(invalid) + "\t\t(" + str(invalid_rel) + ")\n")
+    print("Questions correct: " + str(correct) + " (" + str(correct_rel) + ")")
+    print("Questions wrong: " + str(wrong) + " (" + str(wrong_rel) + ")")
+    print("Questions invalid: " + str(invalid) + " (" + str(invalid_rel) + ")\n")
 
 
 if __name__ == "__main__":
-    with open("data/scenes/CLEVR_val_scenes.json") as scenes_file:
-        scenes = json.load(scenes_file)
-
-    with open("data/questions/CLEVR_val_questions.json") as questions_file:
+    with open("data/CLEVR_v1.0/questions/CLEVR_val_questions.json") as questions_file:
         questions = json.load(questions_file)
 
     with open("theory.lp") as hard_rules_file:
@@ -27,35 +31,32 @@ if __name__ == "__main__":
 
     questions_dict = {}
     for i, q in enumerate(questions["questions"]):
-        if q["image_index"] in questions_dict:
-            questions_dict[q["image_index"]].append(q)
+        if q["image_filename"] in questions_dict:
+            questions_dict[q["image_filename"]].append(q)
         else:
-            questions_dict[q["image_index"]] = [q]
+            questions_dict[q["image_filename"]] = [q]
 
     q_total = 0
     q_correct = 0
+    q_wrong = 0
     q_invalid = 0
 
+    scene_parser = SceneParser()
     start_time = time.time()
-    for i, scene in enumerate(scenes["scenes"]):
+    for i, image_name in enumerate(questions_dict):
+        image_path = "./data/CLEVR_v1.0/images/val/" + image_name
+        image = np.array(Image.open(image_path).convert('RGB'))
+
         program = theory
 
-        objects = ""
-        for j, obj in enumerate(scenes["scenes"][i]["objects"]):
-            objects += "obj(id" + str(j) + "," \
-                       + obj["shape"] + "," \
-                       + obj["size"] + "," \
-                       + obj["color"] + "," \
-                       + obj["material"] + "," \
-                       + str(obj["pixel_coords"][0]) + "," \
-                       + str(obj["pixel_coords"][1]) + "," \
-                       + "0,0).\n"
+        facts = scene_parser.parse(image)
 
-        program += "\n" + objects + "\n"
+        program += "\n" + '\n'.join(facts) + "\n"
 
-        for j, q in enumerate(questions_dict[i]):
+        questions = questions_dict[image_name]
+        for j, q in enumerate(questions_dict[image_name]):
             if q_total % 500 == 0 and q_total > 0:
-                print_stats(q_total, q_correct, q_invalid)
+                print_stats(q_total, q_correct, q_wrong, q_invalid)
 
             q_asp = translate(q["program"])
             composite_program = program + q_asp
@@ -79,15 +80,23 @@ if __name__ == "__main__":
                 if guess_val.isnumeric():
                     if guess_val == str(ground_truth):
                         q_correct += 1
+                    else:
+                        q_wrong += 1
                 elif guess_val == "true":
                     if ground_truth == "yes":
                         q_correct += 1
+                    else:
+                        q_wrong += 1
                 elif guess_val == "false":
                     if ground_truth == "no":
                         q_correct += 1
+                    else:
+                        q_wrong += 1
                 else:
                     if ground_truth == guess_val:
                         q_correct += 1
+                    else:
+                        q_wrong += 1
             else:
                 q_invalid += 1
 
@@ -96,4 +105,4 @@ if __name__ == "__main__":
     end_time = time.time()
 
     print("Total time (s): " + str((end_time - start_time)))
-    print_stats(q_total, q_correct, q_invalid)
+    print_stats(q_total, q_correct, q_wrong, q_invalid)

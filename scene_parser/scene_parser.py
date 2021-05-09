@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 from pytorchyolo import detect, models
-from utils.utils import predictions_to_asp_facts
+from scene_parser.utils.utils import predictions_to_asp_facts
 
 
 # - Weight must be downloaded separately, due to big filesize.
@@ -11,5 +11,6 @@ class SceneParser:
                                        './scene_parser/weights/yolov3_scene_parser.pth')
 
     def parse(self, images, img_size=480, conf_threshold=0.7):
+        # TODO: Refactor s.t. parser can process image batches
         predictions = detect.detect_image(self.model, images, img_size=img_size, conf_thres=conf_threshold)
-        return predictions_to_asp_facts(predictions), predictions
+        return predictions_to_asp_facts(predictions)
