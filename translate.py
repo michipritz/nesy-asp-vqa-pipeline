@@ -6,7 +6,7 @@ trans_template_dict = {
               ":- out({id_in},obj(Id,_,_,_,_,_,_,_,_)), out({id_in},obj(Id',_,_,_,_,_,_,_,_)), Id!=Id'.\n",
     "relate": "out({id_out},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2)) " +
               ":- out({id_in},obj(Id',Shape',Size',Color',Material',X1',Y1',X2',Y2'))," +
-              "obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2), relate(Id,Id',{val}).\n",
+              "obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2), relate(Id,{val},Id').\n",
     "count": "out({id_out},N) :- #count {{Id:out({id_in},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2))}}=N.\n",
     "exist": "out({id_out},true) :- #count {{Id:out({id_in},obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2))}}=N,N>=1.\n " +
              "out({id_out},false) :- not out({id_out},true).\n",
@@ -88,5 +88,5 @@ def translate(program):
         else:
             print("Unknown function name: " + func_name)
 
-    program_trans += "ans(N) :- out({id_in},N).\n".format(id_in=len(program) - 1)
+    program_trans += "ans(N) :- out({id_in},N).\n:- not ans(_).".format(id_in=len(program) - 1)
     return program_trans
