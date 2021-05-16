@@ -17,9 +17,10 @@ class SceneParser:
         self.model = models.load_model(config, weights)
         self.dataloader = detect._create_data_loader(data, 16, img_size, 8)
 
-    def parse(self, img_size=480, conf_threshold=0.25, nms_threshold=0.45, facts='./scene_parser/asp_facts.json',
+    def parse(self, img_size=480, conf_threshold_network=0.25, conf_threshold_parser=0.5, nms_threshold=0.45, facts='./scene_parser/asp_facts.json',
               sd_factor=2,
-              backup_value=2):
+              backup_value=2,
+              standard_detection=False):
         if os.path.isfile(facts):
             with open(facts, 'r') as fp:
                 asp_facts = json.load(fp)
@@ -29,17 +30,20 @@ class SceneParser:
                 self.dataloader,
                 '.',
                 img_size,
-                conf_threshold,
+                conf_threshold_network,
                 nms_threshold
             )
 
-            asp_facts = predictions_to_asp_facts(predictions, sd_factor=sd_factor, backup_value=backup_value)
+            asp_facts = predictions_to_asp_facts(predictions, sd_factor=sd_factor,
+                                                 backup_value=backup_value, standard_detection=standard_detection,
+                                                 conf_threshold=conf_threshold_parser)
 
             with open(facts, 'w') as fp:
                 asp_facts['info']['sd_factor'] = sd_factor
                 asp_facts['info']['backup_value'] = backup_value
                 asp_facts['info']['img_size'] = img_size
-                asp_facts['info']['conf_threshold'] = conf_threshold
+                asp_facts['info']['conf_threshold_network'] = conf_threshold_network
+                asp_facts['info']['conf_threshold_parser'] = conf_threshold_parser
                 asp_facts['info']['nms_threshold'] = nms_threshold
                 asp_facts['info']['data'] = self.dataPath
                 asp_facts['info']['weights'] = self.weightsPath

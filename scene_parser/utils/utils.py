@@ -1,24 +1,31 @@
 import json
 import re
 import torch
+import tqdm
+import matplotlib.pyplot as plt
+
 from pytorchyolo.utils.utils import rescale_boxes, to_cpu
 
 
-def predictions_to_asp_facts(predictions, sd_factor=2, backup_value=2):
+def predictions_to_asp_facts(predictions, sd_factor=2, backup_value=2, standard_detection=False, conf_threshold=0.0):
     conf_mean, conf_sd = get_confidence_mean_and_sd(predictions)
     asp_facts = {'info': {'conf_mean': conf_mean, 'conf_sd': conf_sd}}
-    
-    for scene_id, scene_predictions in enumerate(predictions):
+
+    for scene_id, scene_predictions in tqdm.tqdm(enumerate(predictions), desc="Postprocessing"):
         asp_facts[str(scene_id)] = []
         scene_predictions = rescale_boxes(scene_predictions, 480, (320, 480))
         scene_predictions = to_cpu(scene_predictions).numpy()
         for obj_id, prediction in enumerate(scene_predictions):
             asp_facts[str(scene_id)].append(
-                __prediction_to_asp_fact(obj_id, prediction, conf_mean, conf_sd, sd_factor, backup_value))
+                __prediction_to_asp_fact(obj_id, prediction, conf_mean, conf_sd,
+                                         sd_factor, backup_value, standard_detection,
+                                         conf_threshold=conf_threshold))
     return asp_facts
 
 
-def __prediction_to_asp_fact(obj_id, prediction, conf_mean, conf_sd, sd_factor=2, backup_value=2):
+def __prediction_to_asp_fact(obj_id, prediction, conf_mean, conf_sd,
+                             sd_factor=2, backup_value=2, standard_detection=False,
+                             conf_threshold=0.0):
     x1 = round(prediction[0])
     y1 = round(prediction[1])
     x2 = round(prediction[2])
@@ -28,12 +35,23 @@ def __prediction_to_asp_fact(obj_id, prediction, conf_mean, conf_sd, sd_factor=2
     class_probabilities = prediction[4:]
 
     max_values = []
-    if max(class_probabilities) < (conf_mean - sd_factor * conf_sd):
+
+    max_val = 0
+    if standard_detection:
+        max_val = max(class_probabilities)
+        if max_val < conf_threshold:
+            return ''
+
+    if max(class_probabilities) < (conf_mean - sd_factor * conf_sd) and not standard_detection:
         max_values = sorted(class_probabilities, reverse=True)[:backup_value]
 
     for i, i_prob in enumerate(class_probabilities):
-        if i_prob < conf_mean - sd_factor * conf_sd and not (i_prob in max_values):
-            continue
+        if standard_detection:
+            if i_prob != max_val:
+                continue
+        else:
+            if i_prob < conf_mean - sd_factor * conf_sd and not (i_prob in max_values):
+                continue
 
         size, color, material, shape = __decode_category_id(i)
         tmp = 'obj({id},{shape},{size},{color},{material},{x1},{y1},{x2},{y2});'
@@ -79,5 +97,9 @@ def get_confidence_mean_and_sd(predictions):
     max_values = torch.Tensor().to(predictions[0].device)
     for prediction in predictions:
         max_values = torch.cat((max_values, torch.max(prediction[:, 4:], dim=1)[0]))
+
+    hist_values = max_values.to('cpu').tolist()
+    plt.hist(hist_values, bins=75)
+    plt.show()
 
     return torch.mean(max_values).item(), torch.std(max_values).item()
