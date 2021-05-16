@@ -33,7 +33,7 @@ if __name__ == "__main__":
                               sd_factor=2,
                               backup_value=3)
 
-    for q in tqdm.tqdm(questions["questions"][:1500], desc='Reasoning'):
+    for q in tqdm.tqdm(questions["questions"], desc='Reasoning'):
         image_index = q['image_index']
         program = "\n" + '\n'.join(facts[str(image_index)]) + "\n"
 
