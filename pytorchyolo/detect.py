@@ -50,13 +50,11 @@ def detect_directory(model_path, weights_path, img_path, classes, output_path,
     :param nms_thres: IOU threshold for non-maximum suppression, defaults to 0.5
     :type nms_thres: float, optional
     """
-    dataloader = _create_data_loader(img_path, batch_size, img_size, n_cpu)
+    dataloader = create_data_loader(img_path, batch_size, img_size, n_cpu)
     model = load_model(model_path, weights_path)
     img_detections, imgs = detect(
         model,
         dataloader,
-        output_path,
-        img_size,
         conf_thres,
         nms_thres)
     _draw_and_save_output_images(
@@ -98,7 +96,7 @@ def detect_image(model, image, img_size=416, conf_thres=0.5, nms_thres=0.5):
     return to_cpu(detections).numpy()
 
 
-def detect(model, dataloader, output_path, img_size, conf_thres, nms_thres):
+def detect(model, dataloader, conf_thres, nms_thres):
     """Inferences images with model.
 
     :param model: Model for inference
@@ -118,8 +116,6 @@ def detect(model, dataloader, output_path, img_size, conf_thres, nms_thres):
         List of input image paths
     :rtype: [Tensor], [str]
     """
-    # Create output directory, if missing
-    os.makedirs(output_path, exist_ok=True)
 
     model.eval()  # Set model to evaluation mode
 
@@ -223,7 +219,7 @@ def _draw_and_save_output_image(image_path, detections, img_size, output_path, c
     plt.close()
 
 
-def _create_data_loader(img_path, batch_size, img_size, n_cpu):
+def create_data_loader(img_path, batch_size, img_size, n_cpu) -> object:
     """Creates a DataLoader for inferencing.
 
     :param img_path: Path to file containing all paths to validation images.

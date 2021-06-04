@@ -2,54 +2,81 @@ import json
 import time
 
 import clingo
+import argparse
 import tqdm
 
-from utils.utils import print_stats, get_guesses_from_models
+from utils.utils import print_stats, get_guesses_from_models, help_messages, PostprocessingMethod, AnswerMode
 from translate import translate
+from pytorchyolo.detect import create_data_loader
 from scene_parser.scene_parser import SceneParser
 
-# Config file for YOLOv3 network
-CONFIG_PATH = './scene_parser/config/yolov3_scene_parser.cfg'
-
-# Weights file for YOLOv3 network
-WEIGHTS_PATH = './scene_parser/weights/yolov3_ckpt_100.pth'
-
-# Path to folder containing CLEVR scene images
-DATA_PATH = './data/CLEVR_v1.0/images/val_mini'
-
-# Path to file containing parsed scene information in json format
-# Will be generated and saved if it does not exist
-SCENES_PARSED_PATH = './scene_parser/asp_facts_enhanced_100.json'
-
-# Path to CLEVR questions
-QUESTIONS_PATH = 'data/CLEVR_v1.0/questions/CLEVR_val_questions.json'
-
-# Size of input images, non square images will be padded s.t. dimension is IMG_SIZExIMG_SIZE
-IMG_SIZE = 416
-
-# Confidence threshold used by YOLOv3. Bounding boxes with object_score < CONF_THRESHOLD are discarded
-CONF_THRESHOLD_NETWORK = 0.5
-
-CONF_THRESHOLD_PARSER = 0
-
-# Non maximum suppression threshold used by YOLOv3. Bounding boxes with smaller maximum class score having
-# Intersection of Union (IoU) greater than NMS_THRESHOLD are discarded
-NMS_THRESHOLD = 0.5
-
-# Scaling factor used by scene parser to calculate confidence threshold. Class scores with a value less than
-# conf_mean - SD_FACTOR * conf_sd are discarded. conf_mean is the estimated mean of maximum class scores over all
-# bounding boxes predicted by the network and conf_sd the corresponding estimation of the standard deviation
-SD_FACTOR = 1.5
-
-# Backup value used by scene parser to choose the number of bounding box predictions if no class score surpasses
-# the value of conf_mean - SD_FACTOR * conf_sd. If this case arises the BACKUP_VALUE highest class scores are picked
-BACKUP_VALUE = 3
-
-# If true simply the highest scoring class is picked for one bounding box prediction, no disjunction is used
-STANDARD_DETECTION = False
+USE_CONSTRAINTS = False
 
 if __name__ == "__main__":
-    with open(QUESTIONS_PATH) as questions_file:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-m', '--model', type=str,
+                        default='scene_parser/config/yolov3_scene_parser.cfg', help=help_messages['model'])
+
+    parser.add_argument('-w', '--weights', type=str,
+                        default='scene_parser/weights/yolov3_ckpt_150.pth', help=help_messages['weights'])
+
+    parser.add_argument('-i', '--images', type=str,
+                        default='data/CLEVR_v1.0/images/val', help=help_messages['images'])
+
+    parser.add_argument('-q', '--questions', type=str,
+                        default='data/CLEVR_v1.0/questions/CLEVR_val_questions.json', help=help_messages['questions'])
+
+    parser.add_argument('--img_size', type=int,
+                        default=480, help=help_messages['img_size'])
+
+    parser.add_argument('--facts_out', type=str,
+                        default='facts_out/facts_150_enhanced_multiple.json', help=help_messages['facts_out'])
+
+    parser.add_argument('--results_out', type=str,
+                        default='results_out/', help=help_messages['results_out'])
+
+    parser.add_argument('--conf_thres', type=float,
+                        default=0.5, help=help_messages['conf_thres'])
+
+    parser.add_argument('--nms_thres', type=float,
+                        default=0.5, help=help_messages['nms_thres'])
+
+    parser.add_argument('--sd_factor', type=float,
+                        default=1.0, help=help_messages['sd_factor'])
+
+    parser.add_argument('--fallback_value', type=int,
+                        default=2, help=help_messages['fallback_value'])
+
+    parser.add_argument('--postprocessing_method', type=PostprocessingMethod,
+                        default=PostprocessingMethod.enhanced, choices=list(PostprocessingMethod),
+                        help=help_messages['postprocessing_method'])
+
+    parser.add_argument('--answer_mode', type=AnswerMode, default=AnswerMode.multiple,
+                        choices=list(AnswerMode), help=help_messages['answer_mode'])
+
+    args = parser.parse_args()
+    print(f'Command line arguments: {args}')
+
+    start_time = time.time()
+
+    dataloader = create_data_loader(args.images, 16, args.img_size, 8)
+
+    sceneParser = SceneParser(config=args.model,
+                              weights=args.weights,
+                              images=args.images,
+                              img_size=args.img_size,
+                              facts_out=args.facts_out,
+                              conf_thres=args.conf_thres,
+                              nms_thres=args.nms_thres,
+                              sd_factor=args.sd_factor,
+                              fallback_value=args.fallback_value,
+                              postprocessing_method=args.postprocessing_method)
+
+    facts = sceneParser.parse(data=dataloader)
+
+    # Load questions from specified file
+    with open(args.questions) as questions_file:
         questions = json.load(questions_file)
 
     q_total = 0
@@ -57,31 +84,22 @@ if __name__ == "__main__":
     q_wrong = 0
     q_invalid = 0
 
-    start_time = time.time()
-
-    sceneParser = SceneParser(config=CONFIG_PATH,
-                              weights=WEIGHTS_PATH,
-                              data=DATA_PATH,
-                              img_size=IMG_SIZE)
-
-    facts = sceneParser.parse(img_size=IMG_SIZE,
-                              conf_threshold_network=CONF_THRESHOLD_NETWORK,
-                              conf_threshold_parser=CONF_THRESHOLD_PARSER,
-                              nms_threshold=NMS_THRESHOLD,
-                              facts=SCENES_PARSED_PATH,
-                              sd_factor=SD_FACTOR,
-                              backup_value=BACKUP_VALUE,
-                              standard_detection=STANDARD_DETECTION)
-
-    for q in tqdm.tqdm(questions["questions"][:5000], desc='Reasoning'):
+    optMode = '--opt-mode=optN' if USE_CONSTRAINTS else '--opt-mode=ignore'
+    for q in tqdm.tqdm(questions["questions"], desc='Reasoning'):
         program = "\n" + '\n'.join(facts[str(q['image_index'])]) + "\n" + translate(q["program"])
 
         models = []
-        ctl = clingo.Control("0", message_limit=0)
+        ctl = clingo.Control(['--models=0', optMode, '--parallel-mode=8'], message_limit=0)
         ctl.add("base", [], program)
         ctl.load("theory.lp")
         ctl.ground([("base", [])])
-        ctl.solve(on_model=lambda m: models.append(m.symbols(atoms=True)))
+        with ctl.solve(yield_=True) as handle:
+            for model in handle:
+                if USE_CONSTRAINTS:
+                    if model.optimality_proven:
+                        models.append(model.symbols(atoms=True))
+                else:
+                    models.append(model.symbols(atoms=True))
 
         if models:
             guesses = get_guesses_from_models(models)

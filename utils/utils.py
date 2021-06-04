@@ -1,4 +1,41 @@
 from clingo.symbol import SymbolType
+from enum import Enum
+
+
+class PostprocessingMethod(Enum):
+    standard = 'standard'
+    enhanced = 'enhanced'
+
+    def __str__(self):
+        return self.value
+
+
+class AnswerMode(Enum):
+    single = 'single'
+    multiple = 'multiple'
+
+    def __str__(self):
+        return self.value
+
+
+help_messages = {
+    'model': 'Path to the model configuration file (.cfg)',
+    'weights': 'Path to the weights file (.weights or .pth)',
+    'images': 'Path to the directory containing the images for question answering',
+    'questions': 'Path to the file containing the questions (.json)',
+    'img_size': 'Image input size for YOLOv3. Non-square images are padded to obtain dimension (img_size x img_size)',
+    'facts_out': 'Path to the file containing facts extracted from images. If there is no file with the given '
+                 'name a new one with the same name will be created.',
+    'results_out': 'Path to the location where .txt file containing the results of a run is stored',
+    'conf_thres': 'Confidence threshold used by YOLOv3 during object detection',
+    'nms_thres': 'Non-maximum-suppression threshold used by YOLOv3 during object detection',
+    'sd_factor': 'Number representing the factor to multiply the confidence standard deviation with to obtain '
+                 'the postprocessing threshold for enhanced postprocessing',
+    'fallback_value': 'Number of classes used if no class score surpasses the postprocessing threshold',
+    'postprocessing_method': 'Specifies the processing method used by the scene parser to produce ASP facts',
+    'answer_mode': 'Specifies the method used to select an answer from answer sets. Single makes the system pick '
+                   'the highest scoring answer, while multiple selects all answers'
+}
 
 
 def print_stats(total, correct, wrong, invalid):

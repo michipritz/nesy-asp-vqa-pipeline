@@ -326,8 +326,7 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=Non
         # Box (center x, center y, width, height) to (x1, y1, x2, y2)
         box = xywh2xyxy(x[:, :4])
 
-        i, j = (x[:, 5:] >= 0).nonzero(as_tuple=False).T
-        x = torch.cat((box[i], x[i, 5:]), 1)
+        x = torch.cat((box[:], x[:, 5:]), 1)
 
         # Check shape
         n = x.shape[0]  # number of boxes
@@ -338,9 +337,9 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=Non
             x = x[x[:, 4].argsort(descending=True)[:max_nms]]
 
         # Batched NMS
-        c = x[:, 5:6] * max_wh  # classes
-        # boxes (offset by class), scores
-        boxes, scores = x[:, :4], torch.max(x[:, 4:], dim=1)[0]
+        # boxes (offset by (top) class(es)), scores
+        boxes = x[:, :4]
+        scores = torch.max(x[:, 4:], dim=1)[0]
         i = torchvision.ops.nms(boxes, scores, iou_thres)  # NMS
         if i.shape[0] > max_det:  # limit detections
             i = i[:max_det]

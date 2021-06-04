@@ -1,7 +1,6 @@
 import json
 import re
 import torch
-import tqdm
 import matplotlib.pyplot as plt
 
 from pytorchyolo.utils.utils import rescale_boxes, to_cpu
@@ -11,7 +10,7 @@ def predictions_to_asp_facts(predictions, sd_factor=2, backup_value=2, standard_
     conf_mean, conf_sd = get_confidence_mean_and_sd(predictions)
     asp_facts = {'info': {'conf_mean': conf_mean, 'conf_sd': conf_sd}}
 
-    for scene_id, scene_predictions in tqdm.tqdm(enumerate(predictions), desc="Postprocessing"):
+    for scene_id, scene_predictions in enumerate(predictions):
         asp_facts[str(scene_id)] = []
         scene_predictions = rescale_boxes(scene_predictions, 480, (320, 480))
         scene_predictions = to_cpu(scene_predictions).numpy()
@@ -32,6 +31,7 @@ def __prediction_to_asp_fact(obj_id, prediction, conf_mean, conf_sd,
     y2 = round(prediction[3])
 
     asp_fact = ''
+    weak_constraints = ''
     class_probabilities = prediction[4:]
 
     max_values = []
@@ -54,18 +54,20 @@ def __prediction_to_asp_fact(obj_id, prediction, conf_mean, conf_sd,
                 continue
 
         size, color, material, shape = __decode_category_id(i)
-        tmp = 'obj({id},{shape},{size},{color},{material},{x1},{y1},{x2},{y2});'
-        asp_fact += tmp.format(id=obj_id,
-                               shape=shape,
-                               size=size,
-                               color=color,
-                               material=material,
-                               x1=x1,
-                               y1=y1,
-                               x2=x2,
-                               y2=y2)
+        tmp = 'obj({id},{shape},{size},{color},{material},{x1},{y1},{x2},{y2});'.format(id=obj_id,
+                                                                                        shape=shape,
+                                                                                        size=size,
+                                                                                        color=color,
+                                                                                        material=material,
+                                                                                        x1=x1,
+                                                                                        y1=y1,
+                                                                                        x2=x2,
+                                                                                        y2=y2)
+        asp_fact += tmp
+        weak_constraints += ':~ {L_1}. [{w}]\n'.format(L_1=tmp[:-1], w=round(((1 - i_prob) + 1) * 1000))
 
-    asp_fact = '{' + asp_fact[:-1] + '} = 1.'
+    asp_fact = '{' + asp_fact[:-1] + '} = 1.\n'
+    asp_fact += weak_constraints
     if asp_fact == '{} = 1.':
         return ''
     else:
@@ -94,12 +96,13 @@ def __decode_category_id(category_id):
 
 
 def get_confidence_mean_and_sd(predictions):
-    max_values = torch.Tensor().to(predictions[0].device)
+    max_values = torch.Tensor()
     for prediction in predictions:
+        prediction = to_cpu(prediction)
         max_values = torch.cat((max_values, torch.max(prediction[:, 4:], dim=1)[0]))
 
-    hist_values = max_values.to('cpu').tolist()
-    plt.hist(hist_values, bins=75)
-    plt.show()
+    # hist_values = max_values.to('cpu').tolist()
+    # plt.hist(hist_values, bins=75)
+    # plt.show()
 
     return torch.mean(max_values).item(), torch.std(max_values).item()
