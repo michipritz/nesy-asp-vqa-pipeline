@@ -24,7 +24,7 @@ if __name__ == "__main__":
                         default=480, help=help_messages['img_size'])
 
     parser.add_argument('-o', '--out', type=str,
-                        default='facts_out/facts_150_enhanced_multiple.json', help=help_messages['facts_out'])
+                        default='facts_out/facts.json', help=help_messages['facts_out'])
 
     parser.add_argument('--conf_thres', type=float,
                         default=0.5, help=help_messages['conf_thres'])
