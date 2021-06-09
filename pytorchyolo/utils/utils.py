@@ -1,15 +1,15 @@
 from __future__ import division
 
-import os
-import time
 import platform
-import tqdm
+import random
+import subprocess
+import time
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torchvision
-import numpy as np
-import subprocess
-import random
+import tqdm
 
 
 def provide_determinism(seed=42):
@@ -20,6 +20,7 @@ def provide_determinism(seed=42):
 
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
+
 
 def worker_seed_set(worker_id):
     # See for details of numpy:
@@ -33,7 +34,7 @@ def worker_seed_set(worker_id):
     np.random.seed(ss.generate_state(4))
 
     # random
-    worker_seed = torch.initial_seed() % 2**32
+    worker_seed = torch.initial_seed() % 2 ** 32
     random.seed(worker_seed)
 
 
@@ -307,6 +308,77 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=Non
     max_nms = 30000  # maximum number of boxes into torchvision.ops.nms()
     time_limit = 1.0  # seconds to quit after
     multi_label = nc > 1  # multiple labels per box (adds 0.5ms/img)
+
+    t = time.time()
+    output = [torch.zeros((0, 6), device=prediction.device)] * prediction.shape[0]
+
+    for xi, x in enumerate(prediction):  # image index, image inference
+        # Apply constraints
+        # x[((x[..., 2:4] < min_wh) | (x[..., 2:4] > max_wh)).any(1), 4] = 0  # width-height
+        x = x[x[..., 4] > conf_thres]  # confidence
+
+        # If none remain process next image
+        if not x.shape[0]:
+            continue
+
+        # Compute conf
+        x[:, 5:] *= x[:, 4:5]  # conf = obj_conf * cls_conf
+
+        # Box (center x, center y, width, height) to (x1, y1, x2, y2)
+        box = xywh2xyxy(x[:, :4])
+
+        # Detections matrix nx6 (xyxy, conf, cls)
+        if multi_label:
+            i, j = (x[:, 5:] > conf_thres).nonzero(as_tuple=False).T
+            x = torch.cat((box[i], x[i, j + 5, None], j[:, None].float()), 1)
+        else:  # best class only
+            conf, j = x[:, 5:].max(1, keepdim=True)
+            x = torch.cat((box, conf, j.float()), 1)[conf.view(-1) > conf_thres]
+
+        # Filter by class
+        if classes is not None:
+            x = x[(x[:, 5:6] == torch.tensor(classes, device=x.device)).any(1)]
+
+        # Check shape
+        n = x.shape[0]  # number of boxes
+        if not n:  # no boxes
+            continue
+        elif n > max_nms:  # excess boxes
+            # sort by confidence
+            x = x[x[:, 4].argsort(descending=True)[:max_nms]]
+
+        # Batched NMS
+        c = x[:, 5:6] * max_wh  # classes
+        # boxes (offset by class), scores
+        boxes, scores = x[:, :4] + c, x[:, 4]
+        i = torchvision.ops.nms(boxes, scores, iou_thres)  # NMS
+        if i.shape[0] > max_det:  # limit detections
+            i = i[:max_det]
+
+        output[xi] = x[i]
+
+        if (time.time() - t) > time_limit:
+            print(f'WARNING: NMS time limit {time_limit}s exceeded')
+            break  # time limit exceeded
+
+    return output
+
+
+def non_max_suppression_enhanced(prediction, conf_thres=0.25, iou_thres=0.45):
+    """Performs general post-processing and Non-Maximum Suppression (NMS) on inference results
+    Returns:
+         detections with shape: nx(4+m) (x1, y1, x2, y2, c_1, ..., c_m)
+         m is the number of class predictions for a bounding box and c_1,...,c_m are the
+         predicted class probabilities.
+    """
+
+    nc = prediction.shape[2] - 5  # number of classes
+
+    # Settings
+    # (pixels) minimum and maximum box width and height
+    max_det = 300  # maximum number of detections per image
+    max_nms = 30000  # maximum number of boxes into torchvision.ops.nms()
+    time_limit = 1.0  # seconds to quit after
 
     t = time.time()
     output = [torch.zeros((0, 6), device=prediction.device)] * prediction.shape[0]

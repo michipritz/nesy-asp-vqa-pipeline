@@ -2,27 +2,27 @@
 
 from __future__ import division
 
-import os
 import argparse
-import tqdm
+import os
 import random
+
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
 import numpy as np
-
-from PIL import Image
-
 import torch
 import torchvision.transforms as transforms
-from torch.utils.data import DataLoader
+import tqdm
+from PIL import Image
+from matplotlib.ticker import NullLocator
 from torch.autograd import Variable
+from torch.utils.data import DataLoader
 
 from pytorchyolo.models import load_model
-from pytorchyolo.utils.utils import load_classes, rescale_boxes, non_max_suppression, to_cpu, print_environment_info
+from utils import PostprocessingMethod
 from pytorchyolo.utils.datasets import ImageFolder
 from pytorchyolo.utils.transforms import Resize, DEFAULT_TRANSFORMS
-
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib.ticker import NullLocator
+from pytorchyolo.utils.utils import load_classes, rescale_boxes, non_max_suppression, to_cpu, print_environment_info, \
+    non_max_suppression_enhanced
 
 
 def detect_directory(model_path, weights_path, img_path, classes, output_path,
@@ -56,7 +56,8 @@ def detect_directory(model_path, weights_path, img_path, classes, output_path,
         model,
         dataloader,
         conf_thres,
-        nms_thres)
+        nms_thres,
+        'single')
     _draw_and_save_output_images(
         img_detections, imgs, img_size, output_path, classes)
 
@@ -83,7 +84,7 @@ def detect_image(model, image, img_size=416, conf_thres=0.5, nms_thres=0.5):
     input_img = transforms.Compose([
         DEFAULT_TRANSFORMS,
         Resize(img_size)])(
-            (image, np.zeros((1, 5))))[0].unsqueeze(0)
+        (image, np.zeros((1, 5))))[0].unsqueeze(0)
 
     if torch.cuda.is_available():
         input_img = input_img.to("cuda")
@@ -96,7 +97,7 @@ def detect_image(model, image, img_size=416, conf_thres=0.5, nms_thres=0.5):
     return to_cpu(detections).numpy()
 
 
-def detect(model, dataloader, conf_thres, nms_thres):
+def detect(model, dataloader, conf_thres, nms_thres, postprocessing):
     """Inferences images with model.
 
     :param model: Model for inference
@@ -111,6 +112,8 @@ def detect(model, dataloader, conf_thres, nms_thres):
     :type conf_thres: float, optional
     :param nms_thres: IOU threshold for non-maximum suppression, defaults to 0.5
     :type nms_thres: float, optional
+    :param postprocessing: Defines postprocessing method applied to predictions
+    :type postprocessing: str
     :return: List of detections. The coordinates are given for the padded image that is provided by the dataloader.
         Use `utils.rescale_boxes` to transform them into the desired input image coordinate system before its transformed by the dataloader),
         List of input image paths
@@ -130,7 +133,10 @@ def detect(model, dataloader, conf_thres, nms_thres):
         # Get detections
         with torch.no_grad():
             detections = model(input_imgs)
-            detections = non_max_suppression(detections, conf_thres, nms_thres)
+            if postprocessing == PostprocessingMethod.enhanced:
+                detections = non_max_suppression_enhanced(detections, conf_thres, nms_thres)
+            else:
+                detections = non_max_suppression(detections, conf_thres, nms_thres)
 
         # Store image and detections
         img_detections.extend(detections)
@@ -189,7 +195,6 @@ def _draw_and_save_output_image(image_path, detections, img_size, output_path, c
     colors = [cmap(i) for i in np.linspace(0, 1, n_cls_preds)]
     bbox_colors = random.sample(colors, n_cls_preds)
     for x1, y1, x2, y2, conf, cls_pred in detections:
-
         print(f"\t+ Label: {classes[int(cls_pred)]} | Confidence: {conf.item():0.4f}")
 
         box_w = x2 - x1
@@ -249,7 +254,8 @@ def run():
     print_environment_info()
     parser = argparse.ArgumentParser(description="Detect objects on images.")
     parser.add_argument("-m", "--model", type=str, default="config/yolov3.cfg", help="Path to model definition file (.cfg)")
-    parser.add_argument("-w", "--weights", type=str, default="weights/yolov3.weights", help="Path to weights or checkpoint file (.weights or .pth)")
+    parser.add_argument("-w", "--weights", type=str, default="weights/yolov3.weights",
+                        help="Path to weights or checkpoint file (.weights or .pth)")
     parser.add_argument("-i", "--images", type=str, default="data/samples", help="Path to directory with images to inference")
     parser.add_argument("-c", "--classes", type=str, default="data/coco.names", help="Path to classes label file (.names)")
     parser.add_argument("-o", "--output", type=str, default="output", help="Path to output directory")

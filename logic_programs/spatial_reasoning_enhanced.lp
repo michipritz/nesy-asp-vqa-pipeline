@@ -1,10 +1,5 @@
 
-#const e = 0.
-
-% relate(Id',left,Id) :- obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2), obj(Id',Shape',Size',Color',Material',X1',Y1',X2',Y2'), X1'<X1.
-% relate(Id',right,Id) :- obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2), obj(Id',Shape',Size',Color',Material',X1',Y1',X2',Y2'), X1'>X1.
-% relate(Id',behind,Id) :- obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2), obj(Id',Shape',Size',Color',Material',X1',Y1',X2',Y2'), Y1'<Y1.
-% relate(Id',front,Id) :- obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2), obj(Id',Shape',Size',Color',Material',X1',Y1',X2',Y2'), Y1'>Y1.
+#const e = 5.
 
 relate(Id',left,Id) :- obj(Id,Shape,Size,Color,Material,X1,Y1,X2,Y2),
                        obj(Id',Shape',Size',Color',Material',X1',Y1',X2',Y2'),

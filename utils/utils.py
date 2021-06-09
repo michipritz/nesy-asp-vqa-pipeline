@@ -22,10 +22,11 @@ help_messages = {
     'model': 'Path to the model configuration file (.cfg)',
     'weights': 'Path to the weights file (.weights or .pth)',
     'images': 'Path to the directory containing the images for question answering',
-    'questions': 'Path to the file containing the questions (.json)',
+    'questions': 'Path to the file containing questions (.json)',
     'img_size': 'Image input size for YOLOv3. Non-square images are padded to obtain dimension (img_size x img_size)',
     'facts_out': 'Path to the file containing facts extracted from images. If there is no file with the given '
                  'name a new one with the same name will be created.',
+    'facts': 'Path to the file containing facts extracted from images.',
     'results_out': 'Path to the location where .txt file containing the results of a run is stored',
     'conf_thres': 'Confidence threshold used by YOLOv3 during object detection',
     'nms_thres': 'Non-maximum-suppression threshold used by YOLOv3 during object detection',
@@ -34,19 +35,25 @@ help_messages = {
     'fallback_value': 'Number of classes used if no class score surpasses the postprocessing threshold',
     'postprocessing_method': 'Specifies the processing method used by the scene parser to produce ASP facts',
     'answer_mode': 'Specifies the method used to select an answer from answer sets. Single makes the system pick '
-                   'the highest scoring answer, while multiple selects all answers'
+                   'the highest scoring answer, while multiple selects all answers',
+    'batch_size': 'Batch size used by dataloader',
+    'n_cpu': 'Number of cpus used by dataloader'
 }
 
 
-def print_stats(total, correct, wrong, invalid):
+def get_stats(total, correct, wrong, invalid):
+    return_val = ''
+
     correct_rel = correct / total * 100
     wrong_rel = wrong / total * 100
     invalid_rel = invalid / total * 100
 
-    print("Questions total: \t{:7d}".format(total))
-    print("Questions correct: \t{:7d} ({:4.2f}%)".format(correct, correct_rel))
-    print("Questions wrong: \t{:7d} ({:4.2f}%)".format(wrong, wrong_rel))
-    print("Questions invalid: \t{:7d} ({:4.2f}%)".format(invalid, invalid_rel))
+    return_val += "Questions total: \t{:7d}\n".format(total)
+    return_val += "Questions correct: \t{:7d} ({:4.2f}%)\n".format(correct, correct_rel)
+    return_val += "Questions wrong: \t{:7d} ({:4.2f}%)\n".format(wrong, wrong_rel)
+    return_val += "Questions invalid: \t{:7d} ({:4.2f}%)\n".format(invalid, invalid_rel)
+
+    return return_val
 
 
 def print_question_info(q_id, q_natural, q_true_ans, q_given_ans, q_family_id):
@@ -58,7 +65,7 @@ def print_question_info(q_id, q_natural, q_true_ans, q_given_ans, q_family_id):
 
 
 def get_guesses_from_models(models):
-    guesses = []
+    guesses = set()
     for model in models:
         for atom in model:
             if atom.match('ans', 1):
@@ -71,6 +78,6 @@ def get_guesses_from_models(models):
                     else:
                         val = val.name
 
-                guesses.append(val)
+                guesses.add(val)
                 break
     return guesses
