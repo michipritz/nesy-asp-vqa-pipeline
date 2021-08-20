@@ -2,13 +2,12 @@ import argparse
 import errno
 import json
 import os
-import time
-from datetime import datetime
+from clingo.symbol import SymbolType
 
 import clingo
-import tqdm
+from tqdm import tqdm
 
-from utils import get_stats, get_guesses_from_models, help_messages, AnswerMode, translate
+from utils import get_stats, help_messages, AnswerMode, translate
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -30,8 +29,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(f'Command line arguments: {args}')
 
-    start_time = time.time()
-
     # Create output directory and file if not existing
     if not os.path.exists(os.path.dirname(args.out)) and os.path.dirname(args.out):
         try:
@@ -39,10 +36,6 @@ if __name__ == "__main__":
         except OSError as exception:
             if exception.errno != errno.EEXIST:
                 raise
-
-    # Write creation timestamp in output file
-    with open(args.out, 'w') as out_fp:
-        out_fp.write(f'Created on {datetime.now()}\n\n')
 
     # Load facts from specified file
     with open(args.facts) as fp:
@@ -52,23 +45,20 @@ if __name__ == "__main__":
     with open(args.questions) as questions_file:
         questions = json.load(questions_file)
 
-    # Initialize stats
-    q_total = 0
-    q_correct = 0
-    q_wrong = 0
-    q_invalid = 0
-    total_answers = 0
-    total_answer_sets = 0
-
     # opt-mode=opt makes clingo use weak constraints (optimization statements in general)
     # opt-mode=ignore makes clingo ignore weak constraints (optimization statements in general)
     optMode = '--opt-mode=opt' if args.answer_mode == AnswerMode.single else '--opt-mode=ignore'
 
-    for q in tqdm.tqdm(questions["questions"], desc='Reasoning'):
+    # Array to hold output content
+    lines = []
+
+    for q in tqdm(questions["questions"][:10000], desc='Reasoning'):
         program = "\n" + '\n'.join(facts[str(q['image_index'])]) + "\n" + translate(q["program"])
 
+        models = set()
+        answer_type = ""
+
         # Set up clingo
-        models = []
         ctl = clingo.Control(['--models=0', optMode], message_limit=0)
         ctl.add("base", [], program)
         ctl.load(args.theory)
@@ -77,29 +67,32 @@ if __name__ == "__main__":
         ctl.ground([("base", [])])
         with ctl.solve(yield_=True) as handle:
             for model in handle:
-                models.append(model.symbols(atoms=True))
+                for ans in model.symbols(shown=True):
+                    val = ans.arguments[0]
+                    if val.type == SymbolType.Number:
+                        val = str(val.number)
+                    elif val.type == SymbolType.Function:
+                        if val.name in ['true', 'false']:
+                            val = 'no' if val.name == 'false' else 'yes'
+                        else:
+                            val = val.name
+                    models.add(val)
 
         # Check if computed answer(s) and ground truth are the same
         if models:
-            guesses = get_guesses_from_models(models)
-            total_answers += len(guesses)
+            guesses = [guess for guess in models]
 
             ground_truth = str(q["answer"])
 
             if ground_truth in guesses:
-                q_correct += 1
+                answer_type = "correct"
             else:
-                q_wrong += 1
+                answer_type = "wrong"
         else:
-            q_invalid += 1
+            guesses = []
+            answer_type = "invalid"
 
-        q_total += 1
+        lines.append(f"{q['program'][-1]['function']}|{answer_type}|{guesses}")
 
-    end_time = time.time()
-
-    print(f'Total answers: {total_answers}')
-
-    with open(args.out, 'a') as fp:
-        fp.write("Results:\n")
-        fp.write("Total time (s): " + str((end_time - start_time)) + "\n")
-        fp.write(get_stats(q_total, q_correct, q_wrong, q_invalid))
+    with open(args.out, 'w') as fp:
+        fp.write("\n".join(lines))

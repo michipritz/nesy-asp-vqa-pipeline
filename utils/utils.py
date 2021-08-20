@@ -62,22 +62,3 @@ def print_question_info(q_id, q_natural, q_true_ans, q_given_ans, q_family_id):
     print('Question family ID: {}'.format(str(q_family_id)))
     print('Expected Answer: {}'.format(str(q_true_ans)))
     print('Given Answer: {}\n'.format(str(q_given_ans)))
-
-
-def get_guesses_from_models(models):
-    guesses = set()
-    for model in models:
-        for atom in model:
-            if atom.match('ans', 1):
-                val = atom.arguments[0]
-                if val.type == SymbolType.Number:
-                    val = str(val.number)
-                elif val.type == SymbolType.Function:
-                    if val.name in ['true', 'false']:
-                        val = 'no' if val.name == 'false' else 'yes'
-                    else:
-                        val = val.name
-
-                guesses.add(val)
-                break
-    return guesses

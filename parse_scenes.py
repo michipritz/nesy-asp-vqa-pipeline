@@ -42,9 +42,9 @@ if __name__ == "__main__":
                         default=PostprocessingMethod.enhanced, choices=list(PostprocessingMethod),
                         help=help_messages['postprocessing_method'])
 
-    parser.add_argument('--batch_size', type=int, default=2, help=help_messages['batch_size'])
+    parser.add_argument('--batch_size', type=int, default=4, help=help_messages['batch_size'])
 
-    parser.add_argument('--n_cpu', type=int, default=8, help=help_messages['n_cpu'])
+    parser.add_argument('--n_cpu', type=int, default=4, help=help_messages['n_cpu'])
 
     args = parser.parse_args()
     print(f'Command line arguments: {args}')

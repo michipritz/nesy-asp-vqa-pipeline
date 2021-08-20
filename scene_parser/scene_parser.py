@@ -67,12 +67,12 @@ class SceneParser:
 
             for i, i_prob in enumerate(cls_probabilities):
                 # Check whether class probability is above threshold
-                if i_prob < self.conf_mean - self.sd_factor * self.conf_sd:
+                if i_prob < (self.conf_mean - self.sd_factor * self.conf_sd):
                     continue
 
                 size, color, material, shape = _decode_category_id(i)
 
-                tmp = f'obj({obj_id},{shape},{size},{color},{material},{x1},{y1},{x2},{y2});'
+                tmp = f'obj(0,{obj_id},{size},{color},{material},{shape},{x1},{y1},{x2},{y2});'
                 fact += tmp
                 constraints += f':~ {tmp[:-1]}. [{round(((1 - i_prob) + 1) * 1000)}]\n'
 
@@ -82,9 +82,9 @@ class SceneParser:
                 for i in fallback:
                     size, color, material, shape = _decode_category_id(i)
 
-                    tmp = f'obj({obj_id},{shape},{size},{color},{material},{x1},{y1},{x2},{y2});'
+                    tmp = f'obj(0,{obj_id},{size},{color},{material},{shape},{x1},{y1},{x2},{y2});'
                     fact += tmp
-                    constraints += f':~ {tmp[:-1]}. [{round(((1 - cls_probabilities[i]) + 1) * 1000)}]\n'
+                    constraints += f':~ {tmp[:-1]}. [{round(2000 - (1000 * cls_probabilities[i]))}]\n'
 
             return (
                 f'{{{fact[:-1]}}} = 1.\n'
@@ -92,7 +92,7 @@ class SceneParser:
             )
         else:
             size, color, material, shape = _decode_category_id(prediction[5])
-            return f'obj({obj_id},{shape},{size},{color},{material},{x1},{y1},{x2},{y2}).'
+            return f'obj(0,{obj_id},{size},{color},{material},{shape},{x1},{y1},{x2},{y2}).'
 
 
 def _decode_category_id(category_id):
