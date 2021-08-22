@@ -2,18 +2,17 @@ import argparse
 import errno
 import json
 import os
-from clingo.symbol import SymbolType
 
 import clingo
+from clingo.symbol import SymbolType
 from tqdm import tqdm
 
-from utils import get_stats, help_messages, AnswerMode, translate
+from utils import help_messages, AnswerMode, func_to_asp
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-f', '--facts', type=str,
-                        default='facts_out/facts_150_enhanced_multiple.json', help=help_messages['facts'])
+    parser.add_argument('-f', '--facts', type=str, help=help_messages['facts'])
 
     parser.add_argument('-q', '--questions', type=str,
                         default='data/CLEVR_v1.0/questions/CLEVR_val_questions.json', help=help_messages['questions'])
@@ -21,7 +20,8 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--out', type=str,
                         default='results_out/results.txt', help=help_messages['results_out'])
 
-    parser.add_argument('-t', '--theory', type=str, help='File (.lp) containing additional ASP rules, e.g. for spatial reasoning')
+    parser.add_argument('-t', '--theory', type=str,
+                        help='File (.lp) containing additional ASP rules, e.g. for spatial reasoning')
 
     parser.add_argument('--answer_mode', type=AnswerMode, default=AnswerMode.multiple,
                         choices=list(AnswerMode), help=help_messages['answer_mode'])
@@ -52,8 +52,10 @@ if __name__ == "__main__":
     # Array to hold output content
     lines = []
 
-    for q in tqdm(questions["questions"][:10000], desc='Reasoning'):
-        program = "\n" + '\n'.join(facts[str(q['image_index'])]) + "\n" + translate(q["program"])
+    for q in tqdm(questions["questions"], desc='Reasoning'):
+        q_encoding = func_to_asp(q["program"])
+
+        program = '\n'.join(facts[str(q['image_index'])]) + "\n" + q_encoding
 
         models = set()
         answer_type = ""
@@ -87,6 +89,8 @@ if __name__ == "__main__":
             if ground_truth in guesses:
                 answer_type = "correct"
             else:
+                # if q['program'][-1]['function'] == "count":
+                #    print(f"{q_encoding}\n")
                 answer_type = "wrong"
         else:
             guesses = []

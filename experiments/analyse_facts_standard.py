@@ -7,7 +7,7 @@ if __name__ == '__main__':
 
     for epoch_idx, epoch in enumerate([50, 125, 200]):
         for conf in 25, 50:
-            with open(f'facts_standard/facts_standard_{epoch}_conf{conf}.json', 'r') as fp:
+            with open(f'facts_standard_new/facts_standard_{epoch}_conf{conf}.json', 'r') as fp:
                 facts_pred = json.load(fp)['facts']
 
             tp_global = 0  # True positives
@@ -40,7 +40,7 @@ if __name__ == '__main__':
                     gt_local += 1
 
                     for obj_pred in facts_pred[str(i)]:  # iterate over predicted objects for scene i
-                        _, _, shape, size, color, material, x1, y1, x2, y2 = obj_pred[4:-2].split(',')
+                        _, _, size, color, material, shape, x1, y1, x2, y2 = obj_pred[4:-2].split(',')
                         x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
                         x_pred = x1 + ((x2 - x1) / 2)
                         y_pred = y2 + ((y1 - y2) / 2)
