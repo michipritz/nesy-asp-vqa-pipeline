@@ -7,8 +7,8 @@ def print_stats(stats):
     print(f"Total wrong: {stats['wrong']} ({stats['wrong']/stats['total']*100:.2f}%)")
     print(f"Total invalid: {stats['invalid']} ({stats['invalid']/stats['total']*100:.2f}%)")
 
-    for key in [k for k in stats.keys() if k not in ["correct", "wrong", "invalid", "total"]]:
-        print(f"{key}: {stats[key]['correct']} ({stats[key]['correct']/stats[key]['total']*100:.2f}%)")
+    # for key in [k for k in stats.keys() if k not in ["correct", "wrong", "invalid", "total"]]:
+    #    print(f"{key}: {stats[key]['correct']} ({stats[key]['correct']/stats[key]['total']*100:.2f}%)")
 
     print()
 

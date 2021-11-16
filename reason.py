@@ -2,10 +2,10 @@ import argparse
 import errno
 import json
 import os
+import time
 
 import clingo
 from clingo.symbol import SymbolType
-from tqdm import tqdm
 
 from utils import help_messages, AnswerMode, func_to_asp
 
@@ -22,6 +22,10 @@ if __name__ == "__main__":
 
     parser.add_argument('-t', '--theory', type=str,
                         help='File (.lp) containing additional ASP rules, e.g. for spatial reasoning')
+
+    parser.add_argument('--epoch', type=int, default=0)
+
+    parser.add_argument('--conf', type=float, default=0.0)
 
     parser.add_argument('--answer_mode', type=AnswerMode, default=AnswerMode.multiple,
                         choices=list(AnswerMode), help=help_messages['answer_mode'])
@@ -52,7 +56,19 @@ if __name__ == "__main__":
     # Array to hold output content
     lines = []
 
-    for q in tqdm(questions["questions"], desc='Reasoning'):
+    questionCounter = 0
+    questionsTotal = len(questions)
+
+    print(f"\nEpoch: {args.epoch}, Confidence: {args.conf}")
+
+    start = time.time()
+
+    for i, q in enumerate(questions):
+        if (i + 1) == 1 or ((i + 1) % 1000) == 0:
+            print(f"Questions: {i + 1}/{questionsTotal}, Time elapsed: {time.time() - start} (s)")
+
+        questionCounter += 1
+
         q_encoding = func_to_asp(q["program"])
 
         program = '\n'.join(facts[str(q['image_index'])]) + "\n" + q_encoding
@@ -97,6 +113,10 @@ if __name__ == "__main__":
             answer_type = "invalid"
 
         lines.append(f"{q['program'][-1]['function']}|{answer_type}|{guesses}")
+
+    end = time.time()
+
+    print(f"\nTotal time: {end - start} (s)\n")
 
     with open(args.out, 'w') as fp:
         fp.write("\n".join(lines))

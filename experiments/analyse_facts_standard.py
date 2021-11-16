@@ -1,13 +1,16 @@
 import json
+
 import numpy as np
 
 if __name__ == '__main__':
+    out = []
+
     with open('data/CLEVR_v1.0/scenes/CLEVR_val_scenes.json', 'r') as fp:
         facts_gt = json.load(fp)['scenes']
 
-    for epoch_idx, epoch in enumerate([50, 125, 200]):
+    for epoch_idx, epoch in enumerate([25, 50, 125, 200]):
         for conf in 25, 50:
-            with open(f'facts_standard_new/facts_standard_{epoch}_conf{conf}.json', 'r') as fp:
+            with open(f'results/facts_standard/facts_standard_{epoch}_conf{conf}.json', 'r') as fp:
                 facts_pred = json.load(fp)['facts']
 
             tp_global = 0  # True positives
@@ -81,17 +84,20 @@ if __name__ == '__main__':
                 fn_global += fn_local
                 gt_global += gt_local
 
-            print(f"Evaluation stats for YOLOv3 ({epoch} Epochs, {conf / 100} Confidence threshold)")
-            print(f"True positive: {tp_global}")
-            print(f"False positive: {fp_global}")
-            print(f"False negative: {fn_global}")
-            print(f"Accuracy: {(tp_global/(tp_global+fn_global) * 100):.2f}")
-            print(f"Precision: {(tp_global / (tp_global + fp_global) * 100):.2f}")
-            print(f"Size incorrect: {size_incorrect}")
-            print(f"Shape incorrect: {shape_incorrect}")
-            print(f"Material incorrect: {material_incorrect}")
-            print(f"Color incorrect: {color_incorrect}")
-            print(f"Single error: {single_incorrect}")
-            print(f"Double error: {double_incorrect}")
-            print(f"Triple error: {triple_incorrect}")
-            print(f"Quadruple error: {quadruple_incorrect}\n")
+            out.append(f"Evaluation stats for YOLOv3 ({epoch} Epochs, {conf / 100} Confidence threshold)")
+            out.append(f"True positive: {tp_global}")
+            out.append(f"False positive: {fp_global}")
+            out.append(f"False negative: {fn_global}")
+            out.append(f"Accuracy: {(tp_global / (tp_global + fn_global) * 100):.2f}")
+            out.append(f"Precision: {(tp_global / (tp_global + fp_global) * 100):.2f}")
+            out.append(f"Size incorrect: {size_incorrect}")
+            out.append(f"Shape incorrect: {shape_incorrect}")
+            out.append(f"Material incorrect: {material_incorrect}")
+            out.append(f"Color incorrect: {color_incorrect}")
+            out.append(f"Single error: {single_incorrect}")
+            out.append(f"Double error: {double_incorrect}")
+            out.append(f"Triple error: {triple_incorrect}")
+            out.append(f"Quadruple error: {quadruple_incorrect}\n")
+
+    with open("results/analysis_facts_standard.txt", "w") as fp:
+        fp.write("\n".join(out))
