@@ -1,20 +1,13 @@
-# Neural Networks and ASP
+# A Confidence-Based Interface for Visual Question Answering on CLEVR
 
-Implementation of VQA for CLEVR dataset
+This repository contains the code implementing our answer set programming (ASP) based visual question answering (VQA) 
+approach on CLEVR.
 
-## Installation
+## Requirements
 
-### Clingo
+## Scene Encoding
 
-### CUDA
+## Reasoning
 
-### Download CLEVR
-
-### Downlaod pretrained weights for YOLOv3
-
-## Scene parsing
-
-## Question answering
-
-## Train
+## Evaluation
 

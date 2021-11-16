@@ -18,7 +18,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
 from pytorchyolo.models import load_model
-from utils import PostprocessingMethod
+from utils.utils import PostprocessingMethod
 from pytorchyolo.utils.datasets import ImageFolder
 from pytorchyolo.utils.transforms import Resize, DEFAULT_TRANSFORMS
 from pytorchyolo.utils.utils import load_classes, rescale_boxes, non_max_suppression, to_cpu, print_environment_info, \
@@ -133,7 +133,7 @@ def detect(model, dataloader, conf_thres, nms_thres, postprocessing):
         # Get detections
         with torch.no_grad():
             detections = model(input_imgs)
-            if postprocessing == PostprocessingMethod.enhanced:
+            if postprocessing == PostprocessingMethod.non_deterministic:
                 detections = non_max_suppression_enhanced(detections, conf_thres, nms_thres)
             else:
                 detections = non_max_suppression(detections, conf_thres, nms_thres)

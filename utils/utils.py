@@ -1,10 +1,9 @@
-from clingo.symbol import SymbolType
 from enum import Enum
 
 
 class PostprocessingMethod(Enum):
-    standard = 'standard'
-    enhanced = 'enhanced'
+    deterministic = 'deterministic'
+    non_deterministic = 'non_deterministic'
 
     def __str__(self):
         return self.value
@@ -28,11 +27,11 @@ help_messages = {
                  'name a new one with the same name will be created.',
     'facts': 'Path to the file containing facts extracted from images.',
     'results_out': 'Path to the location where .txt file containing the results of a run is stored',
-    'conf_thres': 'Confidence threshold used by YOLOv3 during object detection',
+    'bounding_box_thres': 'Confidence threshold used by YOLOv3 during object detection',
     'nms_thres': 'Non-maximum-suppression threshold used by YOLOv3 during object detection',
-    'sd_factor': 'Number representing the factor to multiply the confidence standard deviation with to obtain '
+    'alpha': 'Number representing the factor to multiply the confidence standard deviation with to obtain '
                  'the postprocessing threshold for enhanced postprocessing',
-    'fallback_value': 'Number of classes used if no class score surpasses the postprocessing threshold',
+    'k': 'Number of classes used if no class score surpasses the postprocessing threshold',
     'postprocessing_method': 'Specifies the processing method used by the scene parser to produce ASP facts',
     'answer_mode': 'Specifies the method used to select an answer from answer sets. Single makes the system pick '
                    'the highest scoring answer, while multiple selects all answers',
@@ -40,25 +39,24 @@ help_messages = {
     'n_cpu': 'Number of cpus used by dataloader'
 }
 
+# def get_stats(total, correct, wrong, invalid):
+#    return_val = ''
+#
+#    correct_rel = correct / total * 100
+#    wrong_rel = wrong / total * 100
+#    invalid_rel = invalid / total * 100
+#
+#    return_val += "Questions total: \t{:7d}\n".format(total)
+#    return_val += "Questions correct: \t{:7d} ({:4.2f}%)\n".format(correct, correct_rel)
+#    return_val += "Questions wrong: \t{:7d} ({:4.2f}%)\n".format(wrong, wrong_rel)
+#    return_val += "Questions invalid: \t{:7d} ({:4.2f}%)\n".format(invalid, invalid_rel)
+#
+#    return return_val
 
-def get_stats(total, correct, wrong, invalid):
-    return_val = ''
 
-    correct_rel = correct / total * 100
-    wrong_rel = wrong / total * 100
-    invalid_rel = invalid / total * 100
-
-    return_val += "Questions total: \t{:7d}\n".format(total)
-    return_val += "Questions correct: \t{:7d} ({:4.2f}%)\n".format(correct, correct_rel)
-    return_val += "Questions wrong: \t{:7d} ({:4.2f}%)\n".format(wrong, wrong_rel)
-    return_val += "Questions invalid: \t{:7d} ({:4.2f}%)\n".format(invalid, invalid_rel)
-
-    return return_val
-
-
-def print_question_info(q_id, q_natural, q_true_ans, q_given_ans, q_family_id):
-    print('Image ID: {}'.format(str(q_id)))
-    print('Question: {}'.format(str(q_natural)))
-    print('Question family ID: {}'.format(str(q_family_id)))
-    print('Expected Answer: {}'.format(str(q_true_ans)))
-    print('Given Answer: {}\n'.format(str(q_given_ans)))
+# def print_question_info(q_id, q_natural, q_true_ans, q_given_ans, q_family_id):
+#    print('Image ID: {}'.format(str(q_id)))
+#    print('Question: {}'.format(str(q_natural)))
+#    print('Question family ID: {}'.format(str(q_family_id)))
+#    print('Expected Answer: {}'.format(str(q_true_ans)))
+#    print('Given Answer: {}\n'.format(str(q_given_ans)))

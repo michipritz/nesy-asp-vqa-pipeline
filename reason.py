@@ -6,26 +6,23 @@ import time
 
 import clingo
 from clingo.symbol import SymbolType
+from tqdm import tqdm
 
-from utils import help_messages, AnswerMode, func_to_asp
+from utils.utils import help_messages, AnswerMode
+from utils.question_encoder import encode_question
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-f', '--facts', type=str, help=help_messages['facts'])
+    parser.add_argument('-f', '--facts', type=str, required=True, help=help_messages['facts'])
 
     parser.add_argument('-q', '--questions', type=str,
                         default='data/CLEVR_v1.0/questions/CLEVR_val_questions.json', help=help_messages['questions'])
 
-    parser.add_argument('-o', '--out', type=str,
-                        default='results_out/results.txt', help=help_messages['results_out'])
+    parser.add_argument('-o', '--out', type=str, required=True, help=help_messages['results_out'])
 
-    parser.add_argument('-t', '--theory', type=str,
+    parser.add_argument('-t', '--theory', type=str, required=True,
                         help='File (.lp) containing additional ASP rules, e.g. for spatial reasoning')
-
-    parser.add_argument('--epoch', type=int, default=0)
-
-    parser.add_argument('--conf', type=float, default=0.0)
 
     parser.add_argument('--answer_mode', type=AnswerMode, default=AnswerMode.multiple,
                         choices=list(AnswerMode), help=help_messages['answer_mode'])
@@ -47,7 +44,7 @@ if __name__ == "__main__":
 
     # Load questions from specified file
     with open(args.questions) as questions_file:
-        questions = json.load(questions_file)
+        questions = json.load(questions_file)["questions"]
 
     # opt-mode=opt makes clingo use weak constraints (optimization statements in general)
     # opt-mode=ignore makes clingo ignore weak constraints (optimization statements in general)
@@ -56,20 +53,10 @@ if __name__ == "__main__":
     # Array to hold output content
     lines = []
 
-    questionCounter = 0
-    questionsTotal = len(questions)
-
-    print(f"\nEpoch: {args.epoch}, Confidence: {args.conf}")
-
     start = time.time()
 
-    for i, q in enumerate(questions):
-        if (i + 1) == 1 or ((i + 1) % 1000) == 0:
-            print(f"Questions: {i + 1}/{questionsTotal}, Time elapsed: {time.time() - start} (s)")
-
-        questionCounter += 1
-
-        q_encoding = func_to_asp(q["program"])
+    for q in tqdm(questions):
+        q_encoding = encode_question(q["program"])
 
         program = '\n'.join(facts[str(q['image_index'])]) + "\n" + q_encoding
 
