@@ -103,6 +103,8 @@ if __name__ == "__main__":
         else:
             invalid += 1
 
+        total += 1
+
         # lines.append(f"{q['program'][-1]['function']}|{answer_type}|{guess}")
 
     # print(f"\nEpoch: {epoch}, Confidence: {conf}")
