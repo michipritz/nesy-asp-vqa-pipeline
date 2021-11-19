@@ -35,7 +35,7 @@ for enc_type in encoding_type:
     for epoch in epochs:
         for conf in conf_thres:
             factsList, dataList = termPath2dataList(termPath, img_size, domain, conf_thres=conf,
-                                                    weights_path=f"utils/weights/yolov3_ckpt_{epoch}.pth")
+                                                    weights_path=f"utils/weights/yolov3_ckpt_{epoch}.pth", enc_type=enc_type)
 
             print(f"Epoch: {epoch}, Confidence: {conf}")
             torch.save(dataList, f"{out}/datalist_epoch{epoch}_conf{conf * 100:.0f}.pt")
