@@ -88,3 +88,5 @@ ans(V) :- end(T), bool(T,V).
 ans(V) :- end(T), int(T,V).
 
 :- not ans(_).
+
+obj(0,ID,SIZE,COLOR,MATERIAL,SHAPE,X1,Y1,X2,Y2) :- label(0,img,ID,obj(ID,SHAPE,SIZE,COLOR,MATERIAL,X1,Y1,X2,Y2)).

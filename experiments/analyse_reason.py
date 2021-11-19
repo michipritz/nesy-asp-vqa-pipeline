@@ -11,7 +11,7 @@ if __name__ == "__main__":
     stats = {"correct": 0, "wrong": 0, "invalid": 0, "total": 0}
 
     with open(f"{args.input}", "r") as fp:
-        for line in fp:
+        for i, line in enumerate(fp):
             line = line.strip()
             q_type, answer_type, answers = line.split("|")
 

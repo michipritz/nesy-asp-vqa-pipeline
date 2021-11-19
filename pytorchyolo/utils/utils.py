@@ -365,6 +365,65 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=Non
 
     return output
 
+def non_max_suppression_neurasp(prediction, conf_thres=0.25, iou_thres=0.45):
+    """Performs general post-processing and Non-Maximum Suppression (NMS) on inference results
+    Returns:
+         detections with shape: nx(4+m) (x1, y1, x2, y2, c_1, ..., c_m)
+         m is the number of class predictions for a bounding box and c_1,...,c_m are the
+         predicted class probabilities.
+    """
+
+    nc = prediction.shape[2] - 5  # number of classes
+
+    # Settings
+    # (pixels) minimum and maximum box width and height
+    max_det = 300  # maximum number of detections per image
+    max_nms = 30000  # maximum number of boxes into torchvision.ops.nms()
+    time_limit = 1.0  # seconds to quit after
+
+    t = time.time()
+    output = [torch.zeros((0, 6), device=prediction.device)] * prediction.shape[0]
+
+    for xi, x in enumerate(prediction):  # image index, image inference
+        # Apply constraints
+        # x[((x[..., 2:4] < min_wh) | (x[..., 2:4] > max_wh)).any(1), 4] = 0  # width-height
+        x = x[x[..., 4] > conf_thres]  # confidence
+
+        # If none remain process next image
+        if not x.shape[0]:
+            continue
+
+        # Compute conf
+        x[:, 5:] *= x[:, 4:5]  # conf = obj_conf * cls_conf
+
+        # Box (center x, center y, width, height) to (x1, y1, x2, y2)
+        box = xywh2xyxy(x[:, :4])
+
+        x = torch.cat((box[:], x[:, 5:]), 1)
+
+        # Check shape
+        n = x.shape[0]  # number of boxes
+        if not n:  # no boxes
+            continue
+        elif n > max_nms:  # excess boxes
+            # sort by confidence
+            x = x[x[:, 4].argsort(descending=True)[:max_nms]]
+
+        # Batched NMS
+        # boxes (offset by (top) class(es)), scores
+        boxes = x[:, :4]
+        scores = torch.max(x[:, 4:], dim=1)[0]
+        i = torchvision.ops.nms(boxes, scores, iou_thres)  # NMS
+        if i.shape[0] > max_det:  # limit detections
+            i = i[:max_det]
+
+        output[xi] = x[i]
+
+        if (time.time() - t) > time_limit:
+            print(f'WARNING: NMS time limit {time_limit}s exceeded')
+            break  # time limit exceeded
+
+    return output
 
 def non_max_suppression_enhanced(prediction, conf_thres=0.25, iou_thres=0.45):
     """Performs general post-processing and Non-Maximum Suppression (NMS) on inference results

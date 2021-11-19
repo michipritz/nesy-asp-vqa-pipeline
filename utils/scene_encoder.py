@@ -67,7 +67,7 @@ class SceneEncoder:
 
             for i, i_prob in enumerate(cls_probabilities):
                 # Check whether class probability is above threshold
-                if i_prob < (self.conf_mean - self.alpha * self.conf_sd):
+                if i_prob < max((self.conf_mean - self.alpha * self.conf_sd), 0):
                     continue
 
                 size, color, material, shape = _decode_class_id(i)
