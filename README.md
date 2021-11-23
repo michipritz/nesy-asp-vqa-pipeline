@@ -95,7 +95,7 @@ After executing the script you should see a file `data/CLEVR_v1.0/questions/CLEV
 ### Weights
 
 Create a directory `utils/weights` and put YOLOv3 weights in there.
-You can download the weights we used [here](www.google.com).
+You can download the weights we used [here](https://drive.google.com/drive/folders/1rt7X91ZPtNQjgHUN9IB-cCrM43Q9cxgo?usp=sharing).
 The name of a weight file must match the schema `yolov3_ckpt_{epoch}.pth`,
 where `{epoch}` gets replaced with the number of epochs the model was trained.
 
