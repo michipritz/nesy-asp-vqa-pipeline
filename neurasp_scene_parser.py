@@ -1,10 +1,6 @@
 import os
-import sys
-import time
 
 import torch
-
-sys.path.append('../')
 
 from neurasp_clevr.dataGen import termPath2dataList
 

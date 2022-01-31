@@ -1,7 +1,5 @@
 import argparse
-import errno
 import json
-import os
 import random
 
 import clingo
@@ -28,15 +26,6 @@ if __name__ == "__main__":
                         choices=list(AnswerMode), help=help_messages['answer_mode'])
 
     args = parser.parse_args()
-    print(f'Command line arguments: {args}')
-
-    # Create output directory and file if not existing
-    # if not os.path.exists(os.path.dirname(args.out)) and os.path.dirname(args.out):
-    #    try:
-    #        os.makedirs(os.path.dirname(args.out))
-    #    except OSError as exception:
-    #        if exception.errno != errno.EEXIST:
-    #            raise
 
     # Load facts from specified file
     with open(args.facts) as fp:
@@ -48,13 +37,6 @@ if __name__ == "__main__":
 
     with open(args.theory, "r") as theory_file:
         theory = theory_file.read()
-
-    # opt-mode=opt makes clingo use weak constraints (optimization statements in general)
-    # opt-mode=ignore makes clingo ignore weak constraints (optimization statements in general)
-    optMode = '--opt-mode=opt' if args.answer_mode == AnswerMode.single else '--opt-mode=ignore'
-
-    # Array to hold output content
-    # lines = []
 
     total = 0
     correct = 0
@@ -71,10 +53,11 @@ if __name__ == "__main__":
         answer_type = ""
 
         # Set up clingo and ground/solve
-        ctl = clingo.Control(['--warn=none', '--models=0', '-t', '8'])
+        ctl = clingo.Control(['--warn=none', '-t', '8'])
         ctl.add("base", [], program)
         ctl.ground([("base", [])])
         ctl.solve(on_model=lambda m: model_candidates.append(m.symbols(shown=True)))
+
         if len(model_candidates) > 0:
             val = model_candidates[-1][0].arguments[0]
             if val.type == SymbolType.Number:
@@ -105,11 +88,6 @@ if __name__ == "__main__":
 
         total += 1
 
-        # lines.append(f"{q['program'][-1]['function']}|{answer_type}|{guess}")
-
-    # print(f"\nEpoch: {epoch}, Confidence: {conf}")
     print(f"Correct: {correct}/{total} ({correct / total * 100:.2f})")
     print(f"Incorrect: {incorrect}/{total} ({incorrect / total * 100:.2f})")
     print(f"Invalid: {invalid}/{total} ({invalid / total * 100:.2f})")
-    # with open(args.out, 'w') as fp:
-    #    fp.write("\n".join(lines))

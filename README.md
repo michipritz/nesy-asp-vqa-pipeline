@@ -1,4 +1,4 @@
-# A Confidence-Based Interface for Visual Question Answering on CLEVR
+# A Neuro-Symbolic ASP Pipeline for Visual Question Answering
 
 This repository contains the implementation of our answer set programming (ASP) based visual question answering (VQA) 
 approach for the CLEVR dataset, and we provide the code used to conduct our experiments.
@@ -9,7 +9,8 @@ The major software packages we used are:
 1. [Python 3.8](https://www.python.org/downloads/)
 2. [PyTorch 1.7.1](https://pytorch.org/get-started/previous-versions/)
 3. [Clingo 5.5.1](https://potassco.org/clingo/)
-4. [CUDA 11.3](https://developer.nvidia.com/cuda-11.3.0-download-archive)
+4. [ProbLog 2.1](https://dtai.cs.kuleuven.be/problog/)
+5. [CUDA 11.3](https://developer.nvidia.com/cuda-11.3.0-download-archive)
 
 We suggest using [Conda](https://docs.conda.io/en/latest/) for packet management.
 Simply install the listed packages and perform the steps described in [Setup](#setup). 
@@ -26,6 +27,7 @@ PROJECT_NAME
 │   reason.py                   // Reasoning module (Our approach)
 │   neurasp_scene_parser.py     // Scene encoder (NeurASP)
 │   infer.py                    // Reasoning module (NeurASP)
+│   inferproblog.py            // Reasoning module (Problog)
 │
 └───data            // Folder containing CLEVR data, see section Setup
 │   │   ...
@@ -133,3 +135,9 @@ in a NeurASP compatible way. The lists are stored in `results/neurasp_clevr/scen
 
 To perform reasoning on scene encodings and questions using NeurASP simply run
 `bash experiments/infer.py`. The output is printed to the command line.
+
+### Problog
+
+To perform reasoning on scene encodings and questions using Problog run
+`bash experiments/infer_problog.py`. The output is printed to the command line.
+

@@ -1,17 +1,14 @@
 import json
 import random
 import sys
-import time
 
 import torch
-
-sys.path.append('../')
-
 from clingo.symbol import SymbolType
-from neurasp_clevr.network import Net
-from neurasp import NeurASP
-from utils.question_encoder import encode_question
 from tqdm import tqdm
+
+from neurasp import NeurASP
+from neurasp_clevr.network import Net
+from utils.question_encoder import encode_question
 
 with open("data/CLEVR_v1.0/questions/CLEVR_val_sample_15000.json") as fp:
     questions = json.load(fp)["questions"]

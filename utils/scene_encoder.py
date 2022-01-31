@@ -1,4 +1,5 @@
 import json
+import math
 import re
 
 import torch
@@ -67,6 +68,8 @@ class SceneEncoder:
 
             for i, i_prob in enumerate(cls_probabilities):
                 # Check whether class probability is above threshold
+                threshold = self.conf_mean - self.alpha * self.conf_sd
+                threshold = max(threshold, 0)
                 if i_prob < max((self.conf_mean - self.alpha * self.conf_sd), 0):
                     continue
 
@@ -74,18 +77,29 @@ class SceneEncoder:
 
                 tmp = f'obj(0,{obj_id},{size},{color},{material},{shape},{x1},{y1},{x2},{y2});'
                 fact += tmp
-                constraints += f':~ {tmp[:-1]}. [{round(((1 - i_prob) + 1) * 1000)}]\n'
+
+                if i_prob < 0.00674:
+                    penalty = -1000 * -5
+                else:
+                    penalty = int(-1000 * math.log(cls_probabilities[i]))
+
+                constraints += f':~ {tmp[:-1]}. [{penalty},{obj_id}]\n'
 
             # If no class probability exceeded the threshold the k highest scoring classes are chosen
             if not fact:
-                fallback = sorted(range(len(cls_probabilities)), key=lambda cls_i: cls_probabilities[cls_i], reverse=True)[
-                           :self.k]
+                fallback = sorted(range(len(cls_probabilities)), key=lambda cls_i: cls_probabilities[cls_i], reverse=True)[:self.k]
                 for i in fallback:
                     size, color, material, shape = _decode_class_id(i)
 
                     tmp = f'obj(0,{obj_id},{size},{color},{material},{shape},{x1},{y1},{x2},{y2});'
                     fact += tmp
-                    constraints += f':~ {tmp[:-1]}. [{round(2000 - (1000 * cls_probabilities[i]))}]\n'
+
+                    if cls_probabilities[i] < 0.00674:
+                        penalty = -1000 * -5
+                    else:
+                        penalty = int(-1000 * math.log(cls_probabilities[i]))
+
+                    constraints += f':~ {tmp[:-1]}. [{penalty},{obj_id}]\n'
 
             return (
                 f'{{{fact[:-1]}}} = 1.\n'

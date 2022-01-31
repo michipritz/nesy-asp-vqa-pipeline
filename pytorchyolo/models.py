@@ -142,7 +142,12 @@ class YOLOLayer(nn.Module):
 
             x[..., 0:2] = (x[..., 0:2].sigmoid() + self.grid) * stride  # xy
             x[..., 2:4] = torch.exp(x[..., 2:4]) * self.anchor_grid # wh
+
+            # REPLACED SIGMOID WITH SOFTMAX
             x[..., 4:] = x[..., 4:].sigmoid()
+            #x[..., 4] = x[..., 4].sigmoid()
+            #x[..., 5:] = torch.nn.Softmax(dim=len(x.size()) - 1)(x[..., 5:])
+
             x = x.view(bs, -1, self.no)
 
         return x
